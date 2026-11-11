@@ -1,0 +1,70 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-build:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cài dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Smoke test server production
+        env:
+          PORT: 5099
+          NODE_ENV: production
+          DB_PATH: /tmp/ci-finance.db
+        run: |
+          node server/index.js &
+          for i in $(seq 1 20); do curl -fsS http://localhost:5099/healthz && break; sleep 1; done
+          curl -fsS http://localhost:5099/ | grep -q '<div id="root">'
+          curl -fsS "http://localhost:5099/api/v1/ai/suggestions?month=2026-10" | grep -q '"success":true'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  deploy:
+    name: Deploy (Render)
+    needs: test-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Kích hoạt deploy trên Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::warning::Chưa đặt secret RENDER_DEPLOY_HOOK_URL – bỏ qua bước deploy."
+            exit 0
+          fi
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+          echo "Đã gửi yêu cầu deploy tới Render."

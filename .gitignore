@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.local
+server/database/*.db
+server/database/*.db-journal
+server/database/*.db-wal
+.DS_Store
+
+.agents/
+assets/pet/

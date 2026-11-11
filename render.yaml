@@ -1,0 +1,26 @@
+# Render Blueprint – 1 web service chạy cả API (Express) lẫn frontend (dist/)
+# Hướng dẫn: README.md mục "Deploy"
+services:
+  - type: web
+    name: smartfinance
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    # Deploy do GitHub Actions kích hoạt (deploy hook) sau khi test pass
+    autoDeploy: false
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false   # nhập tay trên Render Dashboard, không lưu trong repo
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite,gemini-3.1-flash-lite
+      - key: GEMINI_TIMEOUT_MS
+        value: "5000"
+      - key: DB_PATH
+        value: ./server/database/finance.db
