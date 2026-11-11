@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useFinanceData } from './hooks/useFinanceData.js';
 import { api } from './services/api.js';
@@ -22,9 +22,10 @@ import { SavingsPet } from './components/SavingsPet.jsx';
 import { FloatingPet } from './components/FloatingPet.jsx';
 import { LoginScreen } from './components/LoginScreen.jsx';
 import { BuildSequence } from './components/BuildSequence.jsx';
+import { ReplayIntroButton } from './components/ReplayIntroButton.jsx';
 import { getPetStage, usePetAnimation } from './pet/petController.js';
 import { SubscriptionManager } from './components/SubscriptionManager.jsx';
-import { Footer } from './components/Footer.jsx';
+import { DashboardSkeleton, ListSkeleton } from './components/Skeletons.jsx';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -64,41 +65,6 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-function DashboardSkeleton() {
-  return (
-    <div className="dashboard-stack" aria-busy="true" aria-label="Đang tải dữ liệu...">
-      {/* 4 KPI Cards Skeleton */}
-      <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="metric-card skeleton-card">
-            <div className="skeleton-line skeleton-w-40" />
-            <div className="skeleton-line skeleton-title" style={{ margin: '0.75rem 0' }} />
-            <div className="skeleton-line skeleton-w-60" />
-          </div>
-        ))}
-      </div>
-
-      {/* Hero Bento Banner Skeleton */}
-      <div className="hero-bento-banner skeleton-card" style={{ padding: '1.25rem', height: '76px', marginBottom: '1.25rem' }}>
-        <div className="skeleton-line skeleton-w-50" style={{ height: '18px', marginBottom: '8px' }} />
-        <div className="skeleton-line skeleton-w-70" style={{ height: '14px' }} />
-      </div>
-
-      {/* 2x2 Charts Grid Skeleton */}
-      <div className="chart-grid">
-        <div className="metric-card skeleton-card" style={{ height: '260px' }}>
-          <div className="skeleton-line skeleton-w-50" style={{ marginBottom: '1rem' }} />
-          <div className="skeleton-box" style={{ height: '190px' }} />
-        </div>
-        <div className="metric-card skeleton-card" style={{ height: '260px' }}>
-          <div className="skeleton-line skeleton-w-50" style={{ marginBottom: '1rem' }} />
-          <div className="skeleton-box" style={{ height: '190px' }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 const TABS = [
   { id: 'dashboard', label: 'Tổng quan' },
   { id: 'transactions', label: 'Giao dịch' },
@@ -122,7 +88,11 @@ function NavTabBar({ activeTab, onTabSelect, txCount, budgetCount, petLevel, urg
           key={t.id}
           className={`tab-btn ${activeTab === t.id ? 'active' : ''}`}
           aria-current={activeTab === t.id ? 'page' : undefined}
-          onClick={() => onTabSelect(t.id)}
+          onClick={(e) => {
+            onTabSelect(t.id);
+            // Mobile: thanh tab cuộn ngang – đưa tab vừa chọn vào giữa để luôn thấy
+            e.currentTarget.scrollIntoView?.({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+          }}
         >
           {activeTab === t.id && (
             <motion.span
@@ -138,7 +108,7 @@ function NavTabBar({ activeTab, onTabSelect, txCount, budgetCount, petLevel, urg
   );
 }
 
-function DashboardView({ month, summary, prevSummary, breakdown, trend, budgets, onOpenAdd, onOpenBudget }) {
+function DashboardViewImpl({ month, summary, prevSummary, breakdown, trend, budgets, onOpenAdd, onOpenBudget }) {
   const [curY, curM] = month.split('-').map(Number);
   const numDays = new Date(curY, curM, 0).getDate();
 
@@ -248,6 +218,8 @@ function DashboardView({ month, summary, prevSummary, breakdown, trend, budgets,
   );
 }
 
+const DashboardView = memo(DashboardViewImpl);
+
 function useAppActions(data, playPet = () => {}) {
   const handleCreateTx = async (txData) => {
     try {
@@ -341,6 +313,7 @@ export function App() {
           theme={theme}
           onToggleTheme={toggleTheme}
           onLogout={handleLogout}
+          onReplayIntro={() => setPhase('building')}
           revealed={phase === 'app'}
         />
       )}
@@ -354,7 +327,7 @@ export function App() {
   );
 }
 
-function MainApp({ theme, onToggleTheme, onLogout, revealed }) {
+function MainApp({ theme, onToggleTheme, onLogout, onReplayIntro, revealed }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
@@ -363,6 +336,8 @@ function MainApp({ theme, onToggleTheme, onLogout, revealed }) {
   );
 
   const data = useFinanceData();
+  const openTxModal = useCallback(() => setIsTxModalOpen(true), []);
+  const openBudgetModal = useCallback(() => setIsBudgetModalOpen(true), []);
 
   const currentStage = getPetStage(data.pet?.xp || 0);
   const hasExceededBudget = data.budgets.some((b) => b.status === 'EXCEEDED_100');
@@ -455,14 +430,14 @@ function MainApp({ theme, onToggleTheme, onLogout, revealed }) {
                 breakdown={data.breakdown}
                 trend={data.trend}
                 budgets={data.budgets}
-                onOpenAdd={() => setIsTxModalOpen(true)}
-                onOpenBudget={() => setIsBudgetModalOpen(true)}
+                onOpenAdd={openTxModal}
+                onOpenBudget={openBudgetModal}
               />
             )
           )}
 
           {activeTab === 'transactions' && (
-            <TransactionList
+            data.isLoading ? <ListSkeleton label="Đang tải giao dịch" /> : <TransactionList
               transactions={data.transactions}
               categories={data.categories}
               onFilterChange={async (f) => data.setTransactions(await api.getTransactions({ month: data.month, ...f }))}
@@ -472,7 +447,7 @@ function MainApp({ theme, onToggleTheme, onLogout, revealed }) {
           )}
 
           {activeTab === 'budgets' && (
-            <BudgetList
+            data.isLoading ? <ListSkeleton rows={4} label="Đang tải hạn mức" /> : <BudgetList
               budgets={data.budgets}
               month={data.month}
               onOpenModal={() => setIsBudgetModalOpen(true)}
@@ -518,7 +493,7 @@ function MainApp({ theme, onToggleTheme, onLogout, revealed }) {
         </motion.div>
       </AnimatePresence>
 
-      <Footer />
+      <ReplayIntroButton isVisible={revealed} onClick={onReplayIntro} />
 
       <FloatingPet
         petAnim={petAnim}

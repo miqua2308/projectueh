@@ -554,7 +554,7 @@ body {
    ========================================================================== */
 .budget-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
   gap: 1.5rem;
 }
 
@@ -693,7 +693,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  z-index: 100;
+  z-index: 1000; /* trên pet nổi (998) và nút xem lại intro */
   animation: fadeIn 0.2s ease;
 }
 
@@ -1231,16 +1231,6 @@ body {
   border-radius: var(--radius-sm, 6px);
 }
 
-[data-theme='dark'] .skeleton-line,
-[data-theme='dark'] .skeleton-box {
-  background: linear-gradient(
-    90deg,
-    #1e293b 25%,
-    #334155 50%,
-    #1e293b 75%
-  );
-  background-size: 200% 100%;
-}
 
 .skeleton-line {
   height: 12px;

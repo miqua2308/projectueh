@@ -271,7 +271,7 @@ h1, h2, h3 { color: var(--text-title); letter-spacing: -0.01em; }
 /* ==========================================================================
    AI BUILD SEQUENCE (con trỏ dựng giao diện)
    ========================================================================== */
-.build-overlay { position: fixed; inset: 0; z-index: 1100; background: var(--paper); overflow: hidden; }
+.build-overlay { position: fixed; inset: 0; z-index: 1100; background: var(--paper); overflow: hidden; touch-action: none; }
 .build-frame { position: absolute; top: 24px; left: 50%; translate: -50% 0; width: min(1200px, calc(100vw - 32px)); height: calc(100vh - 48px); }
 .build-block {
   position: absolute; top: 0; left: 0;
@@ -299,14 +299,16 @@ h1, h2, h3 { color: var(--text-title); letter-spacing: -0.01em; }
 }
 .build-cursor .cursor-label img { width: 32px; height: 32px; margin: -7px -4px -7px -4px; }
 .build-log {
-  position: absolute; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  position: absolute; left: 50%; translate: -50% 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   background: #2B1E27; color: #F3E8DC;
   font-family: var(--font-pixel); font-size: 1.05rem; line-height: 1.25;
-  padding: 0.55rem 0.8rem; border-radius: 8px; min-width: 240px; max-width: calc(100vw - 32px);
+  padding: 0.55rem 0.8rem; border-radius: 8px;
+  width: max-content; max-width: min(340px, calc(100vw - 176px));
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   box-shadow: 4px 4px 0 var(--pig-deep);
 }
 .build-log .ok { color: #86EFAC; }
-.build-skip { position: absolute; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.build-skip { position: absolute; right: 16px; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 6; }
 
 /* ==========================================================================
    DARK THEME
@@ -353,4 +355,161 @@ h1, h2, h3 { color: var(--text-title); letter-spacing: -0.01em; }
 
 @media (prefers-reduced-motion: reduce) {
   .dashboard-stack > *, .metrics-grid > *, .chart-grid > * { animation: none; }
+}
+
+/* ---------- Skeleton & khung biểu đồ ---------- */
+.skeleton-line, .skeleton-box {
+  background: linear-gradient(90deg, var(--bg-subtle) 25%, var(--border-hairline) 50%, var(--bg-subtle) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite ease-in-out;
+  border-radius: 8px;
+}
+.chart-frame { position: relative; width: 100%; }
+.chart-skeleton { position: absolute; inset: 0; transition: opacity var(--dur-std) var(--ease-out); }
+.chart-frame[data-ready="true"] .chart-skeleton { opacity: 0; pointer-events: none; }
+.chart-empty {
+  display: grid; place-items: center; height: 210px; padding: 0 1rem; text-align: center;
+  color: var(--text-muted); font-size: 0.82rem;
+  border: 1px dashed var(--border-hairline); border-radius: 10px;
+}
+@media (prefers-reduced-motion: reduce) { .skeleton-line, .skeleton-box { animation: none; } }
+
+/* ---------- Intro: element nhỏ (logo, pill, tab, nút), glyph biểu đồ, pet thả xuống ---------- */
+.build-block.small { border-radius: 8px; }
+.build-block.small .bb-line { top: 50%; left: 10px; transform: translateY(-50%); }
+.bb-sprite { position: absolute; inset: 0; margin: auto; width: 70%; height: 70%; opacity: 0; }
+.bb-glyph { position: absolute; left: 14px; top: 26px; width: calc(100% - 28px); height: calc(100% - 36px); opacity: 0; }
+.build-pet { position: absolute; opacity: 0; z-index: 4; pointer-events: none; }
+@supports (height: 100dvh) { .build-frame { height: calc(100dvh - 48px); } }
+
+/* ---------- Nút "Xem lại intro" (góc phải dưới) ---------- */
+.replay-intro-btn {
+  position: fixed;
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 998;
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  height: 36px; padding: 0 0.85rem;
+  font: inherit; font-size: 0.8rem; font-weight: 700;
+  color: var(--on-primary); background: var(--ink);
+  border: 2px solid var(--ink); border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--pig-deep);
+  cursor: pointer;
+}
+.replay-intro-btn:hover { box-shadow: 4px 4px 0 var(--pig-deep); }
+.replay-intro-btn:active { box-shadow: 0 0 0 var(--pig-deep); }
+.replay-intro-btn:focus-visible { outline: 3px solid var(--ocean-600); outline-offset: 3px; }
+.replay-icon { flex: none; }
+.replay-label-short { display: none; }
+
+/* ==========================================================================
+   MOBILE
+   ========================================================================== */
+@media (hover: none) {
+  .metric-card:hover { box-shadow: none; border-color: var(--border-hairline); }
+  .btn:hover { transform: none; box-shadow: none; background: var(--primary); }
+  .btn-secondary:hover { background: var(--bg-card); }
+  .pet-tab-sprite-box:hover { transform: none; }
+  .login-btn:hover { transform: none; box-shadow: 6px 6px 0 var(--pig-deep); }
+}
+@media (pointer: coarse) {
+  .btn, .icon-btn, .tab-btn, .btn-ghost-danger { min-height: 40px; }
+  .btn-sm { min-height: 36px; }
+  .month-nav-btn { width: 40px; height: 40px; }
+  .replay-intro-btn { height: 40px; }
+}
+
+@media (max-width: 640px) {
+  html { font-size: 14px; }
+  body { overflow-x: clip; }
+  .app-container {
+    padding: 0.75rem max(0.75rem, env(safe-area-inset-right)) 7rem max(0.75rem, env(safe-area-inset-left));
+  }
+
+  /* Header: tên + các hàng điều khiển gọn */
+  .app-header { padding: 0.6rem; gap: 0.6rem; border-radius: 12px; margin-bottom: 0.75rem; }
+  .brand-tagline { display: none; }
+  .brand-mark { width: 38px; height: 38px; }
+  .brand-name { font-size: 1.05rem; }
+  .header-tools { width: 100%; gap: 0.4rem; }
+  .month-navigator { flex: 1 1 100%; justify-content: space-between; }
+  .month-navigator input[type="month"] { flex: 1; text-align: center; min-width: 0; }
+  .net-balance-pill { flex: 1 1 100%; justify-content: center; }
+  .icon-btn { flex: 1 1 auto; justify-content: center; }
+
+  /* Tab: cuộn ngang mượt, bám vào giữa */
+  .nav-tabs { scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; margin-bottom: 0.9rem; }
+  .tab-btn { flex: none; scroll-snap-align: center; padding: 0.5rem 0.75rem; }
+
+  /* Card & KPI: 2 cột, số không tràn */
+  .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.6rem; margin-bottom: 0.75rem; }
+  .metric-card, .goal-card, .budget-card, .hero-bento-banner { padding: 0.8rem 0.85rem; min-width: 0; }
+  .metric-eyebrow { flex-wrap: wrap; font-size: 0.74rem; }
+  .metric-value { font-size: 1.15rem; overflow-wrap: anywhere; }
+  .metric-subline { font-size: 0.74rem; }
+  .chart-grid { gap: 0.6rem; margin-bottom: 0.6rem; }
+  .section-header { gap: 0.6rem; }
+  .section-header > .btn { width: 100%; justify-content: center; }
+  .budget-grid { gap: 0.75rem; }
+
+  /* Form: 16px để iOS không tự zoom khi chạm vào ô nhập */
+  .form-input, .form-select, .month-navigator input[type="month"] { font-size: 16px; }
+  .filter-bar { padding: 0.85rem; gap: 0.6rem; margin-bottom: 1rem; }
+  .filter-group { flex: 1 1 calc(50% - 0.3rem); min-width: 0; }
+  .filter-group .form-input, .filter-group .form-select { width: 100%; min-width: 0; }
+  .filter-bar > div:last-child { width: 100%; }
+  .filter-bar > div:last-child .btn { flex: 1; justify-content: center; }
+
+  /* Bảng giao dịch -> dạng thẻ */
+  .responsive-table thead { display: none; }
+  .responsive-table, .responsive-table tbody { display: block; width: 100%; }
+  .responsive-table tr {
+    display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 0.75rem; align-items: center;
+    grid-template-areas: "date date" "cat amt" "note act";
+    padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--border-hairline);
+  }
+  .responsive-table tr:last-child { border-bottom: 0; }
+  .responsive-table td { display: block; padding: 0; border: 0; background: none !important; min-width: 0; }
+  .responsive-table td:nth-child(1) { grid-area: date; }
+  .responsive-table td:nth-child(2) { grid-area: cat; }
+  .responsive-table td:nth-child(3) { grid-area: note; overflow-wrap: anywhere; font-size: 0.85rem; }
+  .responsive-table td:nth-child(4) { grid-area: amt; font-size: 1rem; }
+  .responsive-table td:nth-child(5) { grid-area: act; text-align: right !important; }
+
+  /* Gói gia hạn */
+  .subscription-item { flex-wrap: wrap; gap: 0.6rem; }
+
+  /* Modal dạng bottom-sheet, cuộn được */
+  .modal-overlay { padding: 0.5rem; align-items: flex-end; }
+  .modal-content {
+    max-height: calc(100dvh - 1rem); overflow-y: auto; padding: 1.1rem; border-radius: 16px;
+    padding-bottom: max(1.1rem, env(safe-area-inset-bottom));
+  }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-actions .btn { flex: 1; justify-content: center; }
+
+  /* Pet */
+  .pet-tab-card { padding: 0.75rem 0.85rem 1.1rem; }
+  .pet-stage-area { padding-top: 3.25rem; }
+  .pet-actions .btn { flex: 1 1 100%; justify-content: center; }
+  .floating-speech-bubble { max-width: min(240px, calc(100vw - 24px)); }
+
+  /* AI */
+  .ai-summary-card { gap: 0.7rem; }
+
+  /* Login */
+  .login-btn { font-size: 2.1rem; padding: 0.5rem 1.6rem 0.55rem; }
+  .login-brand { top: 14px; left: 14px; }
+  .login-theme { top: 16px; right: 14px; }
+
+  /* Nút xem lại intro: gọn, chữ ngắn */
+  .replay-label-full { display: none; }
+  .replay-label-short { display: inline; }
+  .replay-intro-btn { padding: 0 0.7rem; }
+}
+
+@media (max-width: 360px) {
+  .metrics-grid { gap: 0.5rem; }
+  .metric-value { font-size: 1.05rem; }
+  .tab-btn { padding: 0.5rem 0.6rem; font-size: 0.8rem; }
 }

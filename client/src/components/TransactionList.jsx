@@ -50,8 +50,8 @@ function TableRow({ tx, onDelete }) {
   const isExp = tx.type === 'EXPENSE';
   return (
     <tr>
-      <td className="num-tabular" style={{ color: 'var(--text-muted)', fontSize: '0.825rem' }}>{formatDate(tx.date)}</td>
-      <td>
+      <td data-label="Ngày" className="num-tabular" style={{ color: 'var(--text-muted)', fontSize: '0.825rem' }}>{formatDate(tx.date)}</td>
+      <td data-label="Danh mục">
         <span className="badge-tag" style={{
           background: isExp ? 'var(--color-expense-soft)' : 'var(--color-income-soft)',
           color: isExp ? 'var(--color-expense)' : 'var(--color-income)',
@@ -60,11 +60,11 @@ function TableRow({ tx, onDelete }) {
           {tx.category_name}
         </span>
       </td>
-      <td style={{ color: tx.note ? 'var(--text-body)' : 'var(--text-muted)' }}>{tx.note || '—'}</td>
-      <td className="num-tabular" style={{ textAlign: 'right', fontWeight: 600, color: isExp ? 'var(--color-expense)' : 'var(--color-income)' }}>
+      <td data-label="Ghi chú" style={{ color: tx.note ? 'var(--text-body)' : 'var(--text-muted)' }}>{tx.note || '—'}</td>
+      <td data-label="Số tiền" className="num-tabular" style={{ textAlign: 'right', fontWeight: 600, color: isExp ? 'var(--color-expense)' : 'var(--color-income)' }}>
         {isExp ? '-' : '+'}{formatVND(tx.amount)}
       </td>
-      <td style={{ textAlign: 'center' }}>
+      <td data-label="" className="cell-actions" style={{ textAlign: 'center' }}>
         <button className="btn-ghost-danger" onClick={() => onDelete(tx.id)}>Xóa</button>
       </td>
     </tr>
@@ -74,7 +74,7 @@ function TableRow({ tx, onDelete }) {
 function TransactionTable({ transactions, onDelete }) {
   return (
     <div className="table-container">
-      <table className="custom-table">
+      <table className="custom-table responsive-table">
         <thead>
           <tr>
             <th>Ngày</th>
