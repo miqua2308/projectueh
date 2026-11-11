@@ -6,6 +6,7 @@ server/database/*.db
 server/database/*.db-journal
 server/database/*.db-wal
 .DS_Store
+package-lock.json
 
 .agents/
 assets/pet/
