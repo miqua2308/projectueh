@@ -9,3 +9,4 @@ server/database/*.db-wal
 
 .agents/
 assets/pet/
+Skills/
